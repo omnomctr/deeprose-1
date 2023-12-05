@@ -4,6 +4,7 @@
 #include <string.h>
 #include "mpc.h"
 #include "lval.h"
+#include "builtin.h"
 
 int main(void) {
     // mpc parser config stuff 
