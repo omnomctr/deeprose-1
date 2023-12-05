@@ -1,0 +1,1 @@
+gcc --std=c99 -Wall -leditline -lm parsing.c mpc.c lval.c && ./a.out

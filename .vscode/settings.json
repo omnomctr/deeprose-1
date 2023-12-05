@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "readline.h": "c",
+        "cstdlib": "c",
+        "string.h": "c",
+        "format": "c",
+        "chrono": "cpp",
+        "typeinfo": "cpp"
+    }
+}
