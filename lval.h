@@ -36,8 +36,10 @@ struct lenv {
     lval** vals;
 };
 
+char* ltype_name(int t);
+
 lval* lval_num(long x);
-lval* lval_err(char* message);
+lval* lval_err(char* fmt, ...);
 lval* lval_sym(char* symbol);
 lval* lval_sexpr(void);
 lval* lval_fun(lbuiltin func);
@@ -59,9 +61,6 @@ lenv* lenv_new(void);
 void lenv_del(lenv* e);
 lval* lenv_get(lenv* e, lval* key);
 void lenv_put(lenv* e, lval* key, lval* value);
-
-
-
 
 lval* lval_join(lval* x, lval* y);
 #endif

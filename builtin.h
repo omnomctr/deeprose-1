@@ -13,6 +13,7 @@ lval* builtin_sub(lenv* e, lval* a);
 lval* builtin_mul(lenv* e, lval* a);
 lval* builtin_div(lenv* e, lval* a);
 lval* builtin_pow(lenv* e, lval* a);
+lval* builtin_mod(lenv* e, lval* a);
 lval* builtin_first(lenv* e, lval* l);
 lval* builtin_rest(lenv* e, lval* l);
 lval* builtin_list(lenv* e, lval* l);

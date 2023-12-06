@@ -4,6 +4,19 @@
 #include <stdarg.h>
 #include "lval.h"
 
+// returns LVAL enum's string name
+char* ltype_name(int t) {
+  switch(t) {
+    case LVAL_FUN: return "Function";
+    case LVAL_NUM: return "Number";
+    case LVAL_ERR: return "Error";
+    case LVAL_SYM: return "Symbol";
+    case LVAL_SEXPR: return "S-Expression";
+    case LVAL_QEXPR: return "Q-Expression";
+    default: return "Unknown";
+  }
+}
+
 // create a lisp value number
 lval* lval_num(long x) {
     lval* v = malloc(sizeof(lval));
@@ -13,11 +26,23 @@ lval* lval_num(long x) {
 }
 
 // create a lisp value error
-lval* lval_err(char* message) {
+lval* lval_err(char* fmt, ...) {
     lval* v = malloc(sizeof(lval));
     v->type = LVAL_ERR;
-    v->err = malloc(strlen(message) + 1);
-    strcpy(v->err, message);
+
+    va_list va;
+    va_start(va, fmt);
+
+    // should be enought
+    v->err = malloc(512);
+
+    // put the arguments into the error string with c's format!
+    vsnprintf(v->err, 511, fmt, va);
+
+    // reallocate
+    v->err = realloc(v->err, strlen(v->err) + 1);
+
+    va_end(va);
     return v;
 }
 
@@ -175,7 +200,7 @@ lval* lval_copy(lval* v) {
     return x;
 }
 
-// evaluate s-expression (doesnt evaluate symbols)
+// evaluate s-expression 
 lval* lval_eval_sexpr(lenv* e, lval* v) {
     // recursively evaluate children 
     for (int i = 0; i < v->count; i++) {
@@ -288,7 +313,7 @@ lval* lenv_get(lenv* e, lval* key) {
     }
 
     // otherwise we can return an error 
-    return lval_err("Unbound Symbol");
+    return lval_err("Unbound Symbol '%s'", key->sym);
 }
 
 // binds a symbol to a value
