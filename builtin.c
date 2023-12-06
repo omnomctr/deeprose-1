@@ -4,6 +4,7 @@
 #define LASSERT(args, cond, err) \
     if (!(cond)) { lval_del(args); return lval_err(err); }
 
+// create lisp function, add it to the environment e, and free up the lisp values
 void lenv_add_builtin(lenv* e, char* name, lbuiltin func) {
     lval* k = lval_sym(name);
     lval* v = lval_fun(func);
@@ -12,6 +13,7 @@ void lenv_add_builtin(lenv* e, char* name, lbuiltin func) {
     lval_del(v);
 }
 
+// all the functions we are adding by default
 void lenv_add_builtins(lenv* e) {
     // list functions 
     lenv_add_builtin(e, "list", builtin_list);
@@ -33,6 +35,7 @@ void lenv_add_builtins(lenv* e) {
     lenv_add_builtin(e, "def", builtin_def);
 }
 
+// tech debt - runs one of these functions if the strings match
 lval* builtin(lenv* e, lval* a, char* func) {
     if (strcmp("list", func) == 0) { return builtin_list(e, a); }
     if (strcmp("first", func) == 0) { return builtin_first(e, a); }
@@ -66,6 +69,7 @@ lval* builtin_pow(lenv* e, lval* a) {
     return builtin_operator(e, a, "^");
 }
 
+// all the math functions
 lval* builtin_operator(lenv* e, lval* v, char* op) {
     for (int i = 0; i < v->count; i++) {
         if (v->cell[i]->type != LVAL_NUM) {
@@ -105,6 +109,7 @@ lval* builtin_operator(lenv* e, lval* v, char* op) {
     return x;
 }
 
+// gives the first element of the list back in a qexpr
 lval* builtin_first(lenv* e, lval* l) {
     // check for potential errors
     LASSERT(l, l->count == 1, "Function 'first' passed too many arguments");
@@ -119,6 +124,8 @@ lval* builtin_first(lenv* e, lval* l) {
     return v;
 }
 
+// gives you all but the first element of a list in a qexpr
+// makes more sense with linked lists and recursion trust me
 lval* builtin_rest(lenv* e, lval* l) {
     // check for potential errors 
     LASSERT(l, l->count == 1, "Function 'rest' passed too many arguments");
@@ -132,11 +139,13 @@ lval* builtin_rest(lenv* e, lval* l) {
     return v;
 }
 
+// literally just switches the lval type to a qexpr
 lval* builtin_list(lenv* e, lval* l) {
     l->type = LVAL_QEXPR;
     return l;
 }
 
+// switches a qexpr to an sexpr, evaluating it
 lval* builtin_eval(lenv* e, lval* l) {
     LASSERT(l, l->count == 1, "Function 'eval' passed too many arguments");
     LASSERT(l, l->cell[0]->type == LVAL_QEXPR, "Function 'eval' passed incorrect type");
@@ -146,6 +155,7 @@ lval* builtin_eval(lenv* e, lval* l) {
     return lval_eval(e, x);
 }
 
+// joins two lists
 lval* builtin_join(lenv* e, lval* l) {
     for (int i = 0; i < l->count; i++) {
         LASSERT(l, l->cell[i]->type == LVAL_QEXPR, "Function 'join' passed incorrect type");
@@ -161,7 +171,10 @@ lval* builtin_join(lenv* e, lval* l) {
     return x;
 }
 
-
+// kind of broken right now if you try to define a variable with a cons result 
+// it will double free something 
+// 
+// adds an element to the front of a list (makes more sense with linked lists since its 0(n))
 lval* builtin_cons(lenv* e, lval* l) {
     LASSERT(l, l->count == 2, "Function 'cons' passed incorrect number of arguments");
     LASSERT(l, l->cell[0]->type == LVAL_NUM, "Function 'cons' passed incorrect type");
@@ -182,6 +195,7 @@ lval* builtin_cons(lenv* e, lval* l) {
     
 }
 
+// returns the length of a list
 lval* builtin_count(lenv* e, lval* l) {
     LASSERT(l, l->count == 1, "Function 'count' passed incorrect number of arguments");
     LASSERT(l, l->cell[0]->type == LVAL_QEXPR, "Function 'count' passed incorrect type");
@@ -189,6 +203,9 @@ lval* builtin_count(lenv* e, lval* l) {
     return lval_num(l->cell[0]->count);
 }
 
+// bind a value / function to a symbol. 
+// takes 1+ symbols in a qexpr, and then a list for each symbol to bind
+// uses lenv_put (basically a bootleg hashmap) to mutate the environment
 lval* builtin_def(lenv* e, lval* a) {
     LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'def' passed incorrect type");
 

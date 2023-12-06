@@ -4,7 +4,7 @@
 #include <stdarg.h>
 #include "lval.h"
 
-
+// create a lisp value number
 lval* lval_num(long x) {
     lval* v = malloc(sizeof(lval));
     v->type = LVAL_NUM;
@@ -12,6 +12,7 @@ lval* lval_num(long x) {
     return v;
 }
 
+// create a lisp value error
 lval* lval_err(char* message) {
     lval* v = malloc(sizeof(lval));
     v->type = LVAL_ERR;
@@ -20,6 +21,7 @@ lval* lval_err(char* message) {
     return v;
 }
 
+// create a lisp value symbol
 lval* lval_sym(char* symbol) {
     lval* v = malloc(sizeof(lval));
     v->type = LVAL_SYM;
@@ -37,6 +39,7 @@ lval* lval_sexpr(void) {
     return v;
 }
 
+// create a lisp  value function (takes in a function ptr)
 lval* lval_fun(lbuiltin func) {
     lval* v = malloc(sizeof(lval));
     v->type = LVAL_FUN;
@@ -44,6 +47,7 @@ lval* lval_fun(lbuiltin func) {
     return v;
 }
 
+// recursively free up lisp values
 void lval_del(lval* v) {
     switch (v->type) {
         case LVAL_NUM: break;
@@ -66,6 +70,7 @@ void lval_del(lval* v) {
     free(v);
 }
 
+// reads and converts the number (used in the repl)
 lval* lval_read_num(mpc_ast_t* t) {
     // errno is basically c's error handling that isn't -1 
     // its a macro that expands into a global or something idk
@@ -75,7 +80,7 @@ lval* lval_read_num(mpc_ast_t* t) {
         lval_num(x) : lval_err("invalid number");
 }
 
-
+// parse AST into lisp values
 lval* lval_read(mpc_ast_t* t) {
     // if its a number or symbol we can just return the converted type 
     if (strstr(t->tag, "number")) { return lval_read_num(t); }
@@ -101,6 +106,7 @@ lval* lval_read(mpc_ast_t* t) {
     return x;
 }
 
+// add a lisp value to another lisp value
 lval* lval_add(lval* v, lval* x) {
     v->count++;
     v->cell = realloc(v->cell, sizeof(lval*) * v->count);
@@ -108,6 +114,7 @@ lval* lval_add(lval* v, lval* x) {
     return v;
 }
 
+// print out an expression recursively w/ lval_print
 void lval_expr_print(lval* v, char open, char close) {
     putchar(open);
 
@@ -122,6 +129,7 @@ void lval_expr_print(lval* v, char open, char close) {
     putchar(close);
 }
 
+// prints out the lisp value depending on what it is
 void lval_print(lval* v) {
     switch (v->type) {
         case LVAL_NUM:   printf("%li", v->num); break;
@@ -133,8 +141,10 @@ void lval_print(lval* v) {
     }
 }
 
+// adds a println to lval_print what can I say
 void lval_println(lval* v) { lval_print(v); putchar('\n'); }
 
+// create a copy of an lval 
 lval* lval_copy(lval* v) {
     lval* x = malloc(sizeof(lval));
     x->type = v->type;
@@ -165,6 +175,7 @@ lval* lval_copy(lval* v) {
     return x;
 }
 
+// evaluate s-expression (doesnt evaluate symbols)
 lval* lval_eval_sexpr(lenv* e, lval* v) {
     // recursively evaluate children 
     for (int i = 0; i < v->count; i++) {
@@ -195,7 +206,7 @@ lval* lval_eval_sexpr(lenv* e, lval* v) {
     return result;
 }
 
-
+// evaluate symbols and then give them to lval_eval_sexpr
 lval* lval_eval(lenv* e, lval* v) {
     if (v->type == LVAL_SYM) {
         lval* x = lenv_get(e, v);
@@ -206,7 +217,8 @@ lval* lval_eval(lenv* e, lval* v) {
     return v;
 }
 
-
+// takes out the i'th element from an array, moving everything 
+// to account for it.
 lval* lval_pop(lval* v, int i) {
     lval* x = v->cell[i];
 
@@ -220,13 +232,14 @@ lval* lval_pop(lval* v, int i) {
     return x;
 }
 
-// same as lval_pop but it consumes the lval ptr passed in
+// same as lval_pop but it also frees up the lval* passed in
 lval* lval_take(lval* v, int i) {
     lval* x = lval_pop(v, i);
     lval_del(v);
     return x;
 }
 
+// joins two lvals. frees y
 lval* lval_join(lval* x, lval* y) {
   while (y->count) {
     x = lval_add(x, lval_pop(y, 0));
@@ -235,6 +248,7 @@ lval* lval_join(lval* x, lval* y) {
   return x;
 }
 
+// create new q-expr (like s-expr but not evaluated)
 lval* lval_qexpr(void) {
     lval* v = malloc(sizeof(lval));
     v->type = LVAL_QEXPR;
@@ -243,6 +257,7 @@ lval* lval_qexpr(void) {
     return v;
 }
 
+// new environment
 lenv* lenv_new(void) {
     lenv* e = malloc(sizeof(lenv));
     e->count = 0;
@@ -251,6 +266,7 @@ lenv* lenv_new(void) {
     return e;
 }
 
+// delete environment
 void lenv_del(lenv* e) {
     for (int i = 0; i < e->count; i++) {
         free(e->syms[i]);
@@ -261,6 +277,8 @@ void lenv_del(lenv* e) {
     free(e);
 }
 
+// get a symbol's value from the environment. 
+// returns an LVAL_ERR if it cant find it
 lval* lenv_get(lenv* e, lval* key) {
     // checks if any items match k in the lenv e 
     for (int i = 0; i < e->count; i++) {
@@ -273,10 +291,11 @@ lval* lenv_get(lenv* e, lval* key) {
     return lval_err("Unbound Symbol");
 }
 
+// binds a symbol to a value
 void lenv_put(lenv* e, lval* key, lval* value) {
     // check if variable already exists
     for (int i = 0; i < e->count; i++) {
-        // if so, replace it with the new value 
+        // if so, delete the old version to not get weird indexing issues
         if (strcmp(e->syms[i], key->sym) == 0) {
             lval_del(e->vals[i]);
             e->vals[i] = lval_copy(value);

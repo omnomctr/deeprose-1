@@ -15,11 +15,11 @@ int main(void) {
     mpc_parser_t* Qexpr    = mpc_new("qexpr");
     mpc_parser_t* Expr     = mpc_new("expr");
     mpc_parser_t* Pablo    = mpc_new("pablo");
-
+ 
     mpca_lang(MPCA_LANG_DEFAULT, 
     "                                       \
     number : /-?[0-9]+/ ;                    \
-    symbol : /[a-zA-Z0-9_+\\-*\\/\\\\=<>!&?]+/ ; \
+    symbol : /[a-zA-Z0-9_+\\-*\\/\\\\=<>!&?\\^]+/ ; \
     sexpr  : '(' <expr>* ')' ;               \
     qexpr  : '{' <expr>* '}' ;                \
     expr   : <number> | <symbol> | <sexpr> | <qexpr> ; \
@@ -51,5 +51,6 @@ int main(void) {
 
     // free up parser heap memory stuff
     mpc_cleanup(5, Number, Symbol, Sexpr, Qexpr, Expr, Pablo);
+    lenv_del(e);
     return 0;
 }
