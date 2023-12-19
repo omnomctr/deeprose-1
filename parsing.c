@@ -33,7 +33,8 @@ int main(void) {
     lenv_add_builtins(e);
 
     while (1) {
-        char* input = readline("pablo => ");
+        // purple ish blue colour
+        char* input = readline("\033[34mpablo =>\033[0m ");
         add_history(input);  
 
         mpc_result_t r;
