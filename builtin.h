@@ -1,6 +1,7 @@
 #ifndef BUILTIN_HEADER
 #define BUILTIN_HEADER
 #include "lval.h"
+#include "lenv.h"
 
 // a few macros I made to do error handling
 #define LASSERT(args, cond, fmt, ...) \

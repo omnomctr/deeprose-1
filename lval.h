@@ -61,14 +61,6 @@ lval* lval_eval(lenv* e, lval* v);
 lval* lval_qexpr(void);
 lval* lval_call(lenv* e, lval* f, lval* a);
 
-lenv* lenv_new(void);
-void lenv_del(lenv* e);
-lval* lenv_get(lenv* e, lval* key);
-void lenv_put(lenv* e, lval* key, lval* value);
-lenv* lenv_copy(lenv* e);
-void lenv_def(lenv* e, lval* key, lval* value);
-
 lval* lval_join(lval* x, lval* y);
-
 lval* lval_lambda(lval* formals, lval* body);
 #endif
