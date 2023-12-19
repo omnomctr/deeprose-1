@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdarg.h>
 #include "lval.h"
+#include "builtin.h"
 
 // returns LVAL enum's string name
 char* ltype_name(int t) {
@@ -68,7 +69,7 @@ lval* lval_sexpr(void) {
 lval* lval_fun(lbuiltin func) {
     lval* v = malloc(sizeof(lval));
     v->type = LVAL_FUN;
-    v->fun = func;
+    v->builtin = func;
     return v;
 }
 
@@ -80,7 +81,13 @@ void lval_del(lval* v) {
         case LVAL_ERR: free(v->err); break;
         case LVAL_SYM: free(v->sym); break;
 
-        case LVAL_FUN: break;
+        case LVAL_FUN: 
+            if (!v->builtin) {
+                lenv_del(v->env);
+                lval_del(v->formals);
+                lval_del(v->body);
+            }
+            break;
         // if its a qexpr or a sexpr we need to recursively delete its elements
         case LVAL_QEXPR:
         case LVAL_SEXPR:
@@ -123,7 +130,7 @@ lval* lval_read(mpc_ast_t* t) {
         if (strcmp(t->children[i]->contents, ")") == 0) { continue; }
         if (strcmp(t->children[i]->contents, "{") == 0) { continue; }
         if (strcmp(t->children[i]->contents, "}") == 0) { continue; }
-        if (strcmp(t->children[i]->tag , "regex") == 0) { continue; }
+        if (strcmp(t->children[i]->tag,  "regex") == 0) { continue; }
 
         x = lval_add(x, lval_read(t->children[i]));
     }
@@ -162,7 +169,17 @@ void lval_print(lval* v) {
         case LVAL_SYM:   printf("%s", v->sym); break;
         case LVAL_SEXPR: lval_expr_print(v, '(', ')'); break;
         case LVAL_QEXPR: lval_expr_print(v, '{', '}'); break;
-        case LVAL_FUN:   printf("<function>"); break;
+        case LVAL_FUN:
+            if (v->builtin) {
+                printf("<builtin>");
+            } else {
+                printf("(\\ ");
+                lval_print(v->formals);
+                putchar(' ');
+                lval_print(v->body);
+                putchar(')');
+            }
+            break;
     }
 }
 
@@ -176,7 +193,16 @@ lval* lval_copy(lval* v) {
 
     switch (v->type) {
         case LVAL_NUM: x->num = v->num; break;
-        case LVAL_FUN: x->fun = v->fun; break;
+        case LVAL_FUN:
+            if (v->builtin) {
+                x->builtin = v->builtin;
+            } else {
+                x->builtin = NULL;
+                x->env = lenv_copy(v->env);
+                x->formals = lval_copy(v->formals);
+                x->body = lval_copy(v->body);
+            }
+            break;
 
         // copying strings using malloc and strcpy
         case LVAL_ERR: 
@@ -221,12 +247,16 @@ lval* lval_eval_sexpr(lenv* e, lval* v) {
     // check that first element is a symbol 
     lval* f = lval_pop(v, 0);
     if (f->type != LVAL_FUN) {
+        lval* err = lval_err(
+            "S-expression starts with incorrect type | got %s, expected %s",
+            ltype_name(f->type), ltype_name(LVAL_FUN)
+        );
         lval_del(f); lval_del(v);
-        return lval_err("First element of S-expression is not a function");
+        return err;
     }
 
-    // evaluate it with a builtin operator 
-    lval* result = f->fun(e, v);
+    // call the function
+    lval* result = lval_call(e, f, v);
     lval_del(f);
     return result;
 }
@@ -282,9 +312,51 @@ lval* lval_qexpr(void) {
     return v;
 }
 
+lval* lval_call(lenv* e, lval* f, lval* a) {
+    // if builtin we can just call it
+    if (f->builtin) { return f->builtin(e, a); }
+
+    int given = a->count;
+    int total = f->formals->count;
+
+    while (a->count) {
+        // if we ran out of formals to bind
+        if (f->formals->count == 0) {
+            lval_del(a);
+            return lval_err("Function passed too many arguments | got %d, expected %d",
+                given, total);
+        }
+        
+        // pop out the next symbol and argument
+        lval* sym = lval_pop(f->formals, 0);
+        lval* val = lval_pop(a, 0);
+
+        // bind a copy into function's environment 
+        lenv_put(f->env, sym, val);
+
+        // delete symbol and value
+        lval_del(sym); lval_del(val);
+    }
+
+    lval_del(a);
+
+    // if all the formals have been bound evaluate
+    if (f->formals->count == 0) {
+        // setup environment
+        f->env->parent = e;
+
+        // eval and return
+        return builtin_eval(f->env, lval_add(lval_sexpr(), lval_copy(f->body)));
+    } else {
+        // otherwise return partially evaluated function
+        return lval_copy(f);
+    }
+}
+
 // new environment
 lenv* lenv_new(void) {
     lenv* e = malloc(sizeof(lenv));
+    e->parent = NULL;
     e->count = 0;
     e->syms = NULL;
     e->vals = NULL;
@@ -312,8 +384,8 @@ lval* lenv_get(lenv* e, lval* key) {
         }
     }
 
-    // otherwise we can return an error 
-    return lval_err("Unbound Symbol '%s'", key->sym);
+    // if there isn't a symbol we can check the parent otherwise return an error
+    return (e->parent) ? lenv_get(e->parent, key) : lval_err("Unbound symbol %s", key->sym);
 }
 
 // binds a symbol to a value
@@ -335,5 +407,43 @@ void lenv_put(lenv* e, lval* key, lval* value) {
     e->vals[e->count - 1] = lval_copy(value);
     e->syms[e->count - 1] = malloc(strlen(key->sym) + 1);
     strcpy(e->syms[e->count - 1], key->sym);
+}
+
+lenv* lenv_copy(lenv* e) {
+    lenv* new = malloc(sizeof(lenv));
+    new->parent = e->parent;
+    new->count = e->count;
+    new->syms = malloc(sizeof(char*) * new->count);
+    new->vals = malloc(sizeof(lval*) * new->count);
+    for (int i = 0; i < e->count; i++) {
+        new->syms[i] = malloc(strlen(e->syms[i]) + 1);
+        strcpy(new->syms[i], e->syms[i]);
+
+        new->vals[i] = lval_copy(e->vals[i]);
+    }
+
+    return new;
+}
+
+// for binding a value to a symbol globally
+void lenv_def(lenv* e, lval* key, lval* value) {
+    while (e->parent) { e = e->parent; }
+    lenv_put(e, key, value);
+}
+
+lval* lval_lambda(lval* formals, lval* body) {
+    lval* v = malloc(sizeof(lval));
+    v->type = LVAL_FUN;
+
+    // not builtin - well set it to null
+    v->builtin = NULL;
+
+    // create new environment for the function
+    v->env = lenv_new();
+
+    v->formals = formals;
+    v->body = body;
+
+    return v; 
 }
 

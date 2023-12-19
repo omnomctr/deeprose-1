@@ -1,13 +1,6 @@
 #include <stdlib.h>
 #include "builtin.h"
 
-#define LASSERT(args, cond, fmt, ...) \
-  if (!(cond)) { \
-    lval* err = lval_err(fmt, ##__VA_ARGS__); \
-    lval_del(args); \
-    return err; \
-  }
-
 // create lisp function, add it to the environment e, and free up the lisp values
 void lenv_add_builtin(lenv* e, char* name, lbuiltin func) {
     lval* k = lval_sym(name);
@@ -38,6 +31,8 @@ void lenv_add_builtins(lenv* e) {
 
     // other 
     lenv_add_builtin(e, "def", builtin_def);
+    lenv_add_builtin(e, "let", builtin_let);
+    lenv_add_builtin(e, "\\", builtin_lambda);
 }
 
 // interface for lenv_add_builtin
@@ -225,9 +220,8 @@ lval* builtin_count(lenv* e, lval* l) {
     return lval_num(l->cell[0]->count);
 }
 
-// bind a value / function to a symbol. 
-// takes 1+ symbols in a qexpr, and then a list for each symbol to bind
-// uses lenv_put (basically a bootleg hashmap) to mutate the environment
+/*
+
 lval* builtin_def(lenv* e, lval* a) {
     LASSERT(a, a->cell[0]->type == LVAL_QEXPR, 
         "Function 'def' passed incorrect type | got %s, expected %s",
@@ -256,4 +250,67 @@ lval* builtin_def(lenv* e, lval* a) {
 
     // return empty unit () sexpr
     return lval_sexpr();
+}
+*/
+
+// used for binding values to symbols
+lval* builtin_var(lenv* e, lval* a, char* func) {
+    LASSERT_ARGS_TYPE(func, a, 0, LVAL_QEXPR);
+
+    // the first symbol should contain the argument symbols
+    lval* syms = a->cell[0];
+    for (int i = 0; i < syms->count; i++) {
+        LASSERT(a, (syms->cell[i]->type == LVAL_SYM),
+            "Function '%s' cannot define non-symbol | Got %s, expected %s",
+            ltype_name(syms->cell[i]->type), ltype_name(LVAL_SYM));
+    }
+
+    LASSERT(a, (syms->count == a->count - 1),
+        "Function '%s' passed too many arguments for symbols | got %i, expected %i",
+        func, syms->count, a->count - 1);
+
+    for (int i = 0; i < syms->count; i++) {
+        // if `def` define it globally. if `ler` define it locally
+        if (strcmp(func, "def") == 0) {
+            lenv_def(e, syms->cell[i], a->cell[i + 1]);
+        } 
+        if (strcmp(func, "let") == 0) {
+            lenv_put(e, syms->cell[i], a->cell[i + 1]);
+        }
+    }
+
+    lval_del(a);
+    return lval_sexpr();
+}
+
+// bind a value / function to a symbol. 
+// takes 1+ symbols in a qexpr, and then a list for each symbol to bind
+// uses lenv_put (basically a bootleg hashmap) to mutate the environment
+lval* builtin_def(lenv* e, lval* a) {
+    return builtin_var(e, a, "def");
+}
+
+// like builtin_def() but locally scoped
+lval* builtin_let(lenv* e, lval* a) {
+    return builtin_var(e, a, "let");
+}
+
+// create a new annonymous function
+lval* builtin_lambda(lenv* e, lval* a) {
+    // check for any potential user errors
+    LASSERT_ARGS_NUM("\\", a, 2);
+    LASSERT_ARGS_TYPE("\\", a, 0, LVAL_QEXPR);
+    LASSERT_ARGS_TYPE("\\", a, 1, LVAL_QEXPR);
+    for (int i = 0; i < a->cell[0]->count; i++) {
+        LASSERT(a, (a->cell[0]->cell[i]->type == LVAL_SYM), 
+            "Cannot define non-symbol | Got %s, expected %s",
+            ltype_name(a->cell[0]->cell[i]->type), ltype_name(LVAL_SYM));
+    }
+
+    // popping out the first two args which we will give to lval_lambda
+    lval* formals = lval_pop(a, 0);
+    lval* body = lval_pop(a, 0);
+    lval_del(a);
+
+    return lval_lambda(formals, body);
 }

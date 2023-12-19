@@ -1,7 +1,33 @@
-#ifndef FUNCTIONS_INCLUDED_1
-#define FUNCTIONS_INCLUDED_1
+#ifndef BUILTIN_HEADER
+#define BUILTIN_HEADER
 #include "lval.h"
 
+// a few macros I made to do error handling
+#define LASSERT(args, cond, fmt, ...) \
+  if (!(cond)) { \
+    lval* err = lval_err(fmt, ##__VA_ARGS__); \
+    lval_del(args); \
+    return err; \
+  }
+
+#define LASSERT_ARGS_NUM(fnname_str, lval_ptr, num) \
+    if (lval_ptr->count != num) { \
+        lval* err = lval_err(   \
+            "Function '%s' passed incorrect number of args | got %d, expected %d", \
+            fnname_str, lval_ptr->count, num \
+            ); \
+        lval_del(lval_ptr); \
+        return err; \
+    }
+
+#define LASSERT_ARGS_TYPE(fnname_str, lval_ptr, index, checktype) \
+    if (lval_ptr->cell[index]->type != checktype) { \
+        lval* err = lval_err( \
+            "Function '%s' passed incorrect type | got %s, expected %s", \
+            fnname_str, ltype_name(lval_ptr->cell[index]->type), ltype_name(checktype)); \
+        lval_del(lval_ptr); \
+        return err; \
+    }
 
 extern void lenv_add_builtin(lenv* e, char* name, lbuiltin func);
 extern void lenv_add_builtins(lenv* e);
@@ -22,4 +48,7 @@ lval* builtin_join(lenv* e, lval* l);
 lval* builtin_cons(lenv* e, lval* l);
 lval* builtin_count(lenv* e, lval* l);
 lval* builtin_def(lenv* e, lval* a);
+lval* builtin_let(lenv* e, lval* a);
+lval* builtin_lambda(lenv* e, lval* a);
+
 #endif

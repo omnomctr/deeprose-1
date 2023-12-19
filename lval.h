@@ -1,5 +1,5 @@
-#ifndef FUNCTIONS_H_INCLUDED
-#define FUNCTIONS_H_INCLUDED
+#ifndef LVAL_HEADER
+#define LVAL_HEADER
 #include <stdarg.h>
 #include "mpc.h"
 
@@ -8,7 +8,7 @@ struct lenv;
 typedef struct lval lval;
 typedef struct lenv lenv;
 
-enum { LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_SEXPR, LVAL_QEXPR, LVAL_FUN }; // type enum
+enum lisptype { LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_SEXPR, LVAL_QEXPR, LVAL_FUN }; // type enum
 enum lisperror { LERR_DIV_ZERO, LERR_BAD_OP, LERR_BAD_NUM }; // error type enum
 
 typedef lval*(*lbuiltin)(lenv*, lval*);
@@ -23,7 +23,10 @@ struct lval {
     char* sym;
         
     // function 
-    lbuiltin fun;
+    lbuiltin builtin;
+    lenv* env;
+    lval* formals;
+    lval* body;
     
     // other lisp values in the list
     int count;
@@ -31,13 +34,13 @@ struct lval {
 };
 
 struct lenv {
+    lenv* parent;
     int count;
     char** syms;
     lval** vals;
 };
 
 char* ltype_name(int t);
-
 lval* lval_num(long x);
 lval* lval_err(char* fmt, ...);
 lval* lval_sym(char* symbol);
@@ -56,11 +59,16 @@ lval* lval_take(lval* v, int i);
 lval* lval_pop(lval* v, int i);
 lval* lval_eval(lenv* e, lval* v);
 lval* lval_qexpr(void);
+lval* lval_call(lenv* e, lval* f, lval* a);
 
 lenv* lenv_new(void);
 void lenv_del(lenv* e);
 lval* lenv_get(lenv* e, lval* key);
 void lenv_put(lenv* e, lval* key, lval* value);
+lenv* lenv_copy(lenv* e);
+void lenv_def(lenv* e, lval* key, lval* value);
 
 lval* lval_join(lval* x, lval* y);
+
+lval* lval_lambda(lval* formals, lval* body);
 #endif
