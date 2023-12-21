@@ -1,1 +1,1 @@
-gcc --std=c99 -Wall -leditline -lm parsing.c mpc.c lval.c builtin.c lenv.c && ./a.out
+gcc --std=c99 -Wall -leditline -lm parsing.c mpc.c lval.c builtin.c lenv.c && clear && ./a.out

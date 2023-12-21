@@ -46,7 +46,7 @@ lval* builtin_rest(lenv* e, lval* l);
 lval* builtin_list(lenv* e, lval* l);
 lval* builtin_eval(lenv* e, lval* l);
 lval* builtin_join(lenv* e, lval* l);
-lval* builtin_cons(lenv* e, lval* l);
+//lval* builtin_cons(lenv* e, lval* l);
 lval* builtin_count(lenv* e, lval* l);
 lval* builtin_def(lenv* e, lval* a);
 lval* builtin_let(lenv* e, lval* a);

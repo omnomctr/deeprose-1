@@ -18,7 +18,7 @@ void lenv_add_builtins(lenv* e) {
     lenv_add_builtin(e, "rest", builtin_rest);
     lenv_add_builtin(e, "eval", builtin_eval);
     lenv_add_builtin(e, "join", builtin_join);
-    lenv_add_builtin(e, "cons", builtin_cons);
+    //lenv_add_builtin(e, "cons", builtin_cons);
     lenv_add_builtin(e, "count", builtin_count);
 
     // math functions 
@@ -176,6 +176,7 @@ lval* builtin_join(lenv* e, lval* l) {
     return x;
 }
 
+/*
 // kind of broken right now if you try to define a variable with a cons result 
 // it will double free something 
 // 
@@ -207,7 +208,7 @@ lval* builtin_cons(lenv* e, lval* l) {
     return y;
     
 }
-
+*/
 // returns the length of a list
 lval* builtin_count(lenv* e, lval* l) {
     LASSERT(l, l->count == 1, 

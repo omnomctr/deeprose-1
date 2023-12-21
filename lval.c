@@ -329,18 +329,54 @@ lval* lval_call(lenv* e, lval* f, lval* a) {
         
         // pop out the next symbol and argument
         lval* sym = lval_pop(f->formals, 0);
-        lval* val = lval_pop(a, 0);
 
+        // incase the next arg is the & operator (rest)
+        if (strcmp(sym->sym, "&") == 0) {
+            // make sure & is followed by another symbol
+            if (f->formals->count != 1) {
+                lval_del(a);
+                return lval_err("Function format invalid | Symbol '&' not followed by a single symbol");
+            }
+
+            // next formal should be bound to remaining arguments
+            lval* nsym = lval_pop(f->formals, 0);
+            lenv_put(f->env, nsym, builtin_list(e, a));
+            lval_del(sym); lval_del(nsym);
+            break;
+        }
+
+        lval* val = lval_pop(a, 0);
         // bind a copy into function's environment 
         lenv_put(f->env, sym, val);
 
         // delete symbol and value
         lval_del(sym); lval_del(val);
+
+        
     }
 
     lval_del(a);
 
-    // if all the formals have been bound evaluate
+    // if & remains in formal list bind to empty list
+    if (f->formals->count > 0 && strcmp(f->formals->cell[0]->sym, "&") == 0) {
+        
+        // check that & isnt passed invalid-ly
+        if (f->formals->count != 2) {
+            return lval_err("Function form invalid | Symbol & not followed by single symbol");
+        }
+
+        // pop and delete &
+        lval_del(lval_pop(f->formals, 0));
+
+        // pop the next symbol, creating an empty list to bind it to
+        lval* sym = lval_pop(f->formals, 0);
+        lval* val = lval_qexpr();
+
+        lenv_put(f->env, sym, val);
+        lval_del(sym); lval_del(val);
+    }
+
+    // if all the formals have been evaluated
     if (f->formals->count == 0) {
         // setup environment
         f->env->parent = e;
@@ -349,6 +385,7 @@ lval* lval_call(lenv* e, lval* f, lval* a) {
         return builtin_eval(f->env, lval_add(lval_sexpr(), lval_copy(f->body)));
     } else {
         // otherwise return partially evaluated function
+        // partial evaluation only works with non - builtin non-variadic functions
         return lval_copy(f);
     }
 }
