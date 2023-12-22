@@ -1,0 +1,47 @@
+;; pablo functions
+
+(def {defn} (\ {name args body} 
+    {def name (\ args body)}))
+
+;; inline
+; (def {defn} (\ {name args body} {def name (\ args body)}))
+
+(defn {apply} {fn xs & rst}
+    {eval (join (list fn) xs rst)})
+
+;; since I'm using arrays rather than linked lists theres no reason
+;; to have a builtin cons function - they would both be O(n)
+(defn {cons} {x xs}
+    {join (list x) xs})
+
+(defn {inc} {n}
+    {+ n 1})
+
+(defn {next} {xs}
+    {first (rest xs)})
+
+(defn {<=} {a b}
+    {or (< a b)
+        (= a b)})
+
+; (defn {<=} {a b} {or (< a b) (= a b)})
+
+(defn {>=} {a b}
+    {or (> a b)
+        (= a b)})
+
+; (defn {>=} {a b} {or (> a b) (= a  b)})
+
+(defn {fib} {n}
+    {if (<= n 1)
+        {n}
+        {+ (fib (- n 1)) (fib (- n 2))}})
+
+; inline
+;  (defn {fib} {n} {if (<= n 1) {n} {+ (fib (- n 1)) (fib (- n 2))}})
+
+; currently doesn't work
+(defn {recursion-demo} {n}
+    {if (< n 2)
+        {recursion-demo (- n 1)}
+        n})

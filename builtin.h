@@ -51,5 +51,15 @@ lval* builtin_count(lenv* e, lval* l);
 lval* builtin_def(lenv* e, lval* a);
 lval* builtin_let(lenv* e, lval* a);
 lval* builtin_lambda(lenv* e, lval* a);
+lval* builtin_gt(lenv* e, lval* a);
+lval* builtin_ge(lenv* e, lval* a);
+lval* builtin_lt(lenv* e, lval* a);
+lval* builtin_le(lenv* e, lval* a);
+lval* builtin_eq(lenv* e, lval* a);
 
+lval* builtin_and(lenv* e, lval* a);
+lval* builtin_or(lenv* e, lval* a);
+lval* builtin_not(lenv* e, lval* a);
+
+lval* builtin_if(lenv* e, lval* a);
 #endif

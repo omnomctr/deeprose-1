@@ -29,6 +29,15 @@ void lenv_add_builtins(lenv* e) {
     lenv_add_builtin(e, "^", builtin_pow);
     lenv_add_builtin(e, "\%", builtin_mod);
 
+    // ordering / conditionals
+    lenv_add_builtin(e, "<", builtin_lt);
+    lenv_add_builtin(e, ">", builtin_gt);
+    lenv_add_builtin(e, "=", builtin_eq);
+    lenv_add_builtin(e, "and", builtin_and);
+    lenv_add_builtin(e, "or", builtin_or);
+    lenv_add_builtin(e, "not", builtin_not);
+    lenv_add_builtin(e, "if", builtin_if);
+    
     // other 
     lenv_add_builtin(e, "def", builtin_def);
     lenv_add_builtin(e, "let", builtin_let);
@@ -58,6 +67,153 @@ lval* builtin_pow(lenv* e, lval* a) {
 
 lval* builtin_mod(lenv* e, lval* a) {
     return builtin_operator(e, a, "\%");
+}
+
+int lval_eq(lval* x, lval* y) {
+    if (x->type != y->type) return 0;
+
+    switch (x->type){
+        case LVAL_NUM:  return (x->num == y->num);  
+        // comparing strings 
+        case LVAL_ERR: return (strcmp(x->err, y->err) == 0);
+        case LVAL_SYM: return (strcmp(x->sym, y->sym) == 0);
+
+        // functions are kinda funky to compare but whatever
+        case LVAL_FUN:
+            if (x->builtin || y->builtin) {
+                return x->builtin == y->builtin;
+            } else {
+                return lval_eq(x->formals, y->formals) && lval_eq(x->body, y->body);
+            }
+        
+        case LVAL_QEXPR:
+        case LVAL_SEXPR:
+            if (x->count != y->count) return 0;
+            for (int i = 0; i < x->count; i++) {
+                if (!lval_eq(x->cell[i], y->cell[i])) return 0;
+            }
+
+            // otherwise 
+            return 1;
+        
+        break;
+    }
+    // if our switch statement isn't exshaustive
+    return 0;
+}
+
+lval* builtin_eq(lenv* e, lval* a) {
+    LASSERT_ARGS_NUM("=", a, 2);
+    int r = lval_eq(a->cell[0], a->cell[1]);
+    lval_del(a);
+    return lval_num(r);
+}
+
+lval* builtin_ord(lenv* e, lval* a, char* op) {
+    LASSERT_ARGS_NUM(op, a, 2);
+    LASSERT_ARGS_TYPE(op, a, 0, LVAL_NUM);
+    LASSERT_ARGS_TYPE(op, a, 1, LVAL_NUM);
+
+    int r;
+
+    if (strcmp(op, ">") == 0) {
+        r = (a->cell[0]->num > a->cell[1]->num);
+    }
+
+    if (strcmp(op, "<") == 0) {
+        r = (a->cell[0]->num < a->cell[1]->num);
+    }
+
+    if (strcmp(op, ">=") == 0) {
+        r = (a->cell[0]->num >= a->cell[1]->num);
+    }
+
+    if (strcmp(op, "<=") == 0) {
+        r = (a->cell[0]->num <= a->cell[1]->num);
+    }
+    if (strcmp(op, "=") == 0) {
+        r =  lval_eq(a->cell[0], a->cell[1]);
+    }
+
+    lval_del(a);
+    return lval_num(r);
+}
+
+lval* builtin_gt(lenv* e, lval* a) {
+    return builtin_ord(e, a, ">");
+}
+
+lval* builtin_ge(lenv* e, lval* a) {
+    return builtin_ord(e, a, ">=");
+}
+
+lval* builtin_lt(lenv* e, lval* a) {
+    return builtin_ord(e, a, "<");
+}
+
+lval* builtin_le(lenv* e, lval* a) {
+    return builtin_ord(e, a, "<=");
+}
+
+lval* builtin_and(lenv* e, lval* a) {
+    LASSERT_ARGS_NUM("and", a, 2);
+    LASSERT_ARGS_TYPE("and", a, 0, LVAL_NUM);
+    LASSERT_ARGS_TYPE("and", a, 1, LVAL_NUM);
+
+    lval* x = lval_pop(a, 0);
+    lval* y = lval_pop(a, 0);
+
+    int result = x->num && y->num;
+
+    free(x); free(y); free(a);
+    return lval_num(result);
+}
+
+lval* builtin_or(lenv* e, lval* a) {
+    LASSERT_ARGS_NUM("or", a, 2);
+    LASSERT_ARGS_TYPE("or", a, 0, LVAL_NUM);
+    LASSERT_ARGS_TYPE("or", a, 1, LVAL_NUM);
+
+    lval* x = lval_pop(a, 0);
+    lval* y = lval_pop(a, 0);
+
+    int result = x->num || y->num;
+
+    free(x); free(y); free(a);
+    return lval_num(result);
+}
+
+lval* builtin_not(lenv* e, lval* a) {
+    LASSERT_ARGS_NUM("not", a, 1);
+    LASSERT_ARGS_TYPE("or", a, 0, LVAL_NUM);
+
+    lval* x = lval_pop(a, 0);
+
+    int result = !(x->num);
+
+    free(x); free(a);
+    return lval_num(result);
+}
+
+lval* builtin_if(lenv* e, lval* a) {
+    LASSERT_ARGS_NUM("if", a, 3);
+    LASSERT_ARGS_TYPE("if", a, 0, LVAL_NUM);
+    LASSERT_ARGS_TYPE("if", a, 1, LVAL_QEXPR);
+    LASSERT_ARGS_TYPE("if", a, 2, LVAL_QEXPR);
+
+    lval* x;
+    // evaluate the two expressions
+    a->cell[1]->type = LVAL_SEXPR;
+    a->cell[2]->type = LVAL_SEXPR;
+
+    if (a->cell[0]->num) {
+        x = lval_eval(e, lval_pop(a, 1));
+    } else {
+        x = lval_eval(e, lval_pop(a, 2));
+    }
+
+    lval_del(a);
+    return x;
 }
 
 // all the math functions
@@ -176,39 +332,6 @@ lval* builtin_join(lenv* e, lval* l) {
     return x;
 }
 
-/*
-// kind of broken right now if you try to define a variable with a cons result 
-// it will double free something 
-// 
-// adds an element to the front of a list (makes more sense with linked lists since its 0(n))
-lval* builtin_cons(lenv* e, lval* l) {
-    LASSERT(l, l->count == 2, 
-        "Function 'cons' passed incorrect number of arguments | got %d, expected 2",
-        l->count);
-    LASSERT(l, l->cell[0]->type == LVAL_NUM, 
-        "Function 'cons' passed incorrect type | got %s, expected %s",
-        ltype_name(l->cell[0]->type), ltype_name(LVAL_NUM));
-    LASSERT(l, l->cell[1]->type == LVAL_QEXPR, 
-        "Function 'cons' passed incorrect type | got %s, expected %s",
-        ltype_name(l->cell[1]->type), ltype_name(LVAL_QEXPR));
-
-    lval* x = lval_pop(l, 0);
-    lval* y = lval_pop(l, 0);
-
-    LASSERT(l, y->type == LVAL_QEXPR, 
-        "Function 'cons' passed incorrect type | got %s, expected %s",
-        ltype_name(y->type), ltype_name(LVAL_QEXPR));
-    
-    y->count++;
-    y->cell = realloc(y->cell, sizeof(lval*) * y->count);
-    
-    memmove(&y->cell[1], &y->cell[0], sizeof(lval*) * y->count);
-    
-    y->cell[0]->num = x->num;
-    return y;
-    
-}
-*/
 // returns the length of a list
 lval* builtin_count(lenv* e, lval* l) {
     LASSERT(l, l->count == 1, 
@@ -220,39 +343,6 @@ lval* builtin_count(lenv* e, lval* l) {
 
     return lval_num(l->cell[0]->count);
 }
-
-/*
-
-lval* builtin_def(lenv* e, lval* a) {
-    LASSERT(a, a->cell[0]->type == LVAL_QEXPR, 
-        "Function 'def' passed incorrect type | got %s, expected %s",
-        ltype_name(a->cell[0]->type), ltype_name(LVAL_QEXPR));
-
-    lval* symbols = a->cell[0];
-
-    // check that everything is a symbol 
-    for (int i = 0; i < symbols->count; i++) {
-        LASSERT(a, symbols->cell[i]->type == LVAL_SYM,
-             "Function 'def' cannot define %s",
-             ltype_name(symbols->cell[i]->type));
-    }    
-    
-    // check that we have the correct number of symbols and values 
-    LASSERT(a, symbols->count == a->count - 1, 
-        "Function 'def' cannot define incorrect number of values to symbols | got %d, expected %d",
-        symbols->count, a->count - 1);
-
-    // if it all works we can assign copies of values to symbols 
-    for (int i = 0; i < symbols->count; i++) {
-        lenv_put(e, symbols->cell[i], a->cell[i + 1]);
-    }
-
-    lval_del(a);
-
-    // return empty unit () sexpr
-    return lval_sexpr();
-}
-*/
 
 // used for binding values to symbols
 lval* builtin_var(lenv* e, lval* a, char* func) {

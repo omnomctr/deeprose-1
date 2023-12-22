@@ -5,6 +5,7 @@
         "string.h": "c",
         "format": "c",
         "chrono": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "variant": "c"
     }
 }
