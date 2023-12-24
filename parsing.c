@@ -75,6 +75,26 @@ int main(int argc, char **argv) {
     lenv* e = lenv_new();
     lenv_add_builtins(e);
 
+    // creating a path str for the prelude 
+    {
+        // 1024 should be enough
+        char path[1024];
+        
+        if (!getenv("PABLOLIBPATH")) {
+            puts("undefined define $PABLOLIBPATH");
+            exit(EXIT_FAILURE);
+        }
+
+        strncpy(path, getenv("PABLOLIBPATH"), 1024);
+        strncat(path, "/stdlib.pbl", 1024 - strlen(path));
+
+        // load file in path
+        builtin_load(e, 
+            lval_add(lval_sexpr(), lval_str(path)));
+    }
+
+    
+
     if (argc >= 2) {
         for (int i = 1; i < argc; i++) {
             // create a lval with the argument as the str 
@@ -88,7 +108,16 @@ int main(int argc, char **argv) {
     
     puts("Pablo version 0.0.0.0.1\n");
     puts("press C-c to exit\n");
-    
+
+    /*
+    //testing
+    FILE* f;
+    char buffer[100];
+    f = fopen("$PABLOLIBPATH/stdlib.pbl", "w+");
+    fread(buffer, 100, 1, f);
+    printf("%s\n", buffer);
+    fclose(f);
+    */
 
     while (1) {
         // purple ish blue colour

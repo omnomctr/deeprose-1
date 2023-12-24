@@ -4,6 +4,10 @@
 (def {False} 0)
 (def {otherwise} 1) ; dont know how usefull this will be besides switch statements
 
+; for the builtin exit function
+(def {EXIT_SUCCESS} 1)
+(def {EXIT_FAILURE} 0)
+
 ;; pablo functions
 
 (def {defn} (\ {name args body} 

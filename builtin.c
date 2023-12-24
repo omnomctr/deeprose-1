@@ -50,6 +50,7 @@ void lenv_add_builtins(lenv* e) {
 
     // other 
     lenv_add_builtin(e, "atoi", builtin_atoi);
+    lenv_add_builtin(e, "itoa", builtin_itoa);
 }
 
 // interface for lenv_add_builtin
@@ -456,4 +457,23 @@ lval* builtin_atoi(lenv* e, lval* a) {
     long x = strtol(n->str, NULL, 10);
     return errno != ERANGE ? 
         lval_num(x) : lval_err("not a number");
+}
+
+lval* builtin_itoa(lenv* e, lval* a) {
+    LASSERT_ARGS_NUM("itoa", a, 1);
+    LASSERT_ARGS_TYPE("itoa", a, 0, LVAL_NUM);
+
+    lval* n = lval_pop(a, 0);
+    lval_del(a);
+
+    // calculating how big the str needs to be
+    // number of digits (log10 rounded up) + 1 for 10x + 1 for null terminating char 
+    // * sizeof char
+    size_t size = (int)(((ceil(log10(n->num))) + 1) + 1) * sizeof(char);
+
+    char* str = malloc(size);
+    snprintf(str, size, "%lu", n->num);
+    lval* new = lval_str(str);
+    free(str); free(n);
+    return new;
 }

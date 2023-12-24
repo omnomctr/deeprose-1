@@ -69,4 +69,5 @@ lval* builtin_exit(lenv* e, lval* a);
 lval* builtin_error(lenv* e, lval* a);
 
 lval* builtin_atoi(lenv* e, lval* a);
+lval* builtin_itoa(lenv* e, lval* a);
 #endif
