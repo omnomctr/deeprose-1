@@ -18,7 +18,7 @@ void lenv_add_builtins(lenv* e) {
     lenv_add_builtin(e, "rest", builtin_rest);
     lenv_add_builtin(e, "eval", builtin_eval);
     lenv_add_builtin(e, "join", builtin_join);
-    //lenv_add_builtin(e, "cons", builtin_cons);
+    lenv_add_builtin(e, "load", builtin_load);
     lenv_add_builtin(e, "count", builtin_count);
 
     // math functions 
@@ -38,10 +38,15 @@ void lenv_add_builtins(lenv* e) {
     lenv_add_builtin(e, "not", builtin_not);
     lenv_add_builtin(e, "if", builtin_if);
     
-    // other 
+    // defining things
     lenv_add_builtin(e, "def", builtin_def);
     lenv_add_builtin(e, "let", builtin_let);
     lenv_add_builtin(e, "\\", builtin_lambda);
+
+    // side effects
+    lenv_add_builtin(e, "print", builtin_print);
+    lenv_add_builtin(e, "exit", builtin_exit);
+    lenv_add_builtin(e, "error", builtin_error);
 }
 
 // interface for lenv_add_builtin
@@ -77,6 +82,7 @@ int lval_eq(lval* x, lval* y) {
         // comparing strings 
         case LVAL_ERR: return (strcmp(x->err, y->err) == 0);
         case LVAL_SYM: return (strcmp(x->sym, y->sym) == 0);
+        case LVAL_STR: return (strcmp(x->str, y->str) == 0);
 
         // functions are kinda funky to compare but whatever
         case LVAL_FUN:
@@ -404,4 +410,34 @@ lval* builtin_lambda(lenv* e, lval* a) {
     lval_del(a);
 
     return lval_lambda(formals, body);
+}
+
+lval* builtin_print(lenv* e, lval* a) {
+    for (int i = 0; i < a->count; i++) {
+        lval_print(a->cell[i]); 
+        putchar(' ');
+    }
+
+    putchar('\n');
+    lval_del(a);
+    return lval_sexpr();
+}
+
+lval* builtin_exit(lenv* e, lval* a) {
+    LASSERT_ARGS_NUM("exit", a, 1);
+    LASSERT_ARGS_TYPE("exit", a, 0, LVAL_NUM);
+
+    printf("\033[91mProgram ending...\033[0m\n");
+    exit(a->cell[0]->num);
+    return lval_sexpr();
+}
+
+lval* builtin_error(lenv* e, lval* a) {
+    LASSERT_ARGS_NUM("error", a, 1);
+    LASSERT_ARGS_TYPE("error", a, 0, LVAL_STR);
+
+    lval* err = lval_err(a->cell[0]->str);
+
+    lval_del(a);
+    return err;
 }

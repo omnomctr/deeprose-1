@@ -1,3 +1,9 @@
+;; pablo variables
+
+(def {True} 1)
+(def {False} 0)
+(def {otherwise} 1) ; dont know how usefull this will be besides switch statements
+
 ;; pablo functions
 
 (def {defn} (\ {name args body} 
@@ -14,8 +20,9 @@
 (defn {cons} {x xs}
     {join (list x) xs})
 
-(defn {inc} {n}
-    {+ n 1})
+
+(defn {inc} {n} {+ n 1})
+(defn {dec} {n} {- n 1})
 
 (defn {next} {xs}
     {first (rest xs)})
@@ -24,24 +31,20 @@
     {or (< a b)
         (= a b)})
 
-; (defn {<=} {a b} {or (< a b) (= a b)})
 
 (defn {>=} {a b}
     {or (> a b)
         (= a b)})
 
-; (defn {>=} {a b} {or (> a b) (= a  b)})
 
 (defn {fib} {n}
     {if (<= n 1)
         {n}
         {+ (fib (- n 1)) (fib (- n 2))}})
 
-; inline
-;  (defn {fib} {n} {if (<= n 1) {n} {+ (fib (- n 1)) (fib (- n 2))}})
 
-; currently doesn't work
-(defn {recursion-demo} {n}
-    {if (< n 2)
-        {recursion-demo (- n 1)}
-        n})
+(defn {nth} {n l}
+    {if (> n 1)
+        {nth (dec n) (rest l)}
+        {eval (first l)}})
+

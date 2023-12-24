@@ -62,4 +62,9 @@ lval* builtin_or(lenv* e, lval* a);
 lval* builtin_not(lenv* e, lval* a);
 
 lval* builtin_if(lenv* e, lval* a);
+
+lval* builtin_load(lenv* e, lval* a);
+lval* builtin_print(lenv* e, lval* a);
+lval* builtin_exit(lenv* e, lval* a);
+lval* builtin_error(lenv* e, lval* a);
 #endif

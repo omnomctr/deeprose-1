@@ -12,6 +12,7 @@ char* ltype_name(int t) {
     case LVAL_NUM: return "Number";
     case LVAL_ERR: return "Error";
     case LVAL_SYM: return "Symbol";
+    case LVAL_STR: return "String";
     case LVAL_SEXPR: return "S-Expression";
     case LVAL_QEXPR: return "Q-Expression";
     default: return "Unknown";
@@ -56,6 +57,14 @@ lval* lval_sym(char* symbol) {
     return v;
 }
 
+lval* lval_str(char* str) {
+    lval* v = malloc(sizeof(lval));
+    v->type = LVAL_STR;
+    v->str = malloc(strlen(str) + 1);
+    strcpy(v->str, str);
+    return v;
+}
+
 // returns a pointer to a new empty s-expression
 lval* lval_sexpr(void) {
     lval* v = malloc(sizeof(lval));
@@ -80,6 +89,7 @@ void lval_del(lval* v) {
 
         case LVAL_ERR: free(v->err); break;
         case LVAL_SYM: free(v->sym); break;
+        case LVAL_STR: free(v->str); break;
 
         case LVAL_FUN: 
             if (!v->builtin) {
@@ -112,12 +122,27 @@ lval* lval_read_num(mpc_ast_t* t) {
         lval_num(x) : lval_err("invalid number");
 }
 
+lval* lval_read_str(mpc_ast_t* t) {
+    // cut off the final quote char
+    t->contents[strlen(t->contents) - 1] = '\0';
+    // funky pointer arithmetic
+    char* unescaped = malloc(strlen(t->contents + 1) + 1);
+    strcpy(unescaped, t->contents+1);
+    // put it through the unescaped function
+    unescaped = mpcf_unescape(unescaped);
+
+    // creating the new lval
+    lval* str = lval_str(unescaped);
+    free(unescaped);
+    return str;
+}
+
 // parse AST into lisp values
 lval* lval_read(mpc_ast_t* t) {
     // if its a number or symbol we can just return the converted type 
     if (strstr(t->tag, "number")) { return lval_read_num(t); }
     if (strstr(t->tag, "symbol")) { return lval_sym(t->contents); }
-    
+    if (strstr(t->tag, "string")) { return lval_read_str(t); }
 
     lval* x = NULL;
     // > is the root according to the parser
@@ -131,6 +156,8 @@ lval* lval_read(mpc_ast_t* t) {
         if (strcmp(t->children[i]->contents, "{") == 0) { continue; }
         if (strcmp(t->children[i]->contents, "}") == 0) { continue; }
         if (strcmp(t->children[i]->tag,  "regex") == 0) { continue; }
+        // ignore comments 
+        if (strstr(t->children[i]->tag, "comment")) { continue; }
 
         x = lval_add(x, lval_read(t->children[i]));
     }
@@ -167,6 +194,7 @@ void lval_print(lval* v) {
         case LVAL_NUM:   printf("%li", v->num); break;
         case LVAL_ERR:   printf("\033[31mError: %s\033[0m", v->err); break;
         case LVAL_SYM:   printf("%s", v->sym); break;
+        case LVAL_STR:   lval_print_str(v); break;
         case LVAL_SEXPR: lval_expr_print(v, '(', ')'); break;
         case LVAL_QEXPR: lval_expr_print(v, '{', '}'); break;
         case LVAL_FUN:
@@ -185,6 +213,18 @@ void lval_print(lval* v) {
 
 // adds a println to lval_print what can I say
 void lval_println(lval* v) { lval_print(v); putchar('\n'); }
+
+void lval_print_str(lval* v) {
+    char* escaped = malloc(strlen(v->str) + 1);
+    strcpy(escaped, v->str);
+
+    // mpc has an "escaped" function
+    escaped = mpcf_escape(escaped);
+
+    //print it between "" charachters 
+    printf("\"%s\"", escaped);
+    free(escaped);
+}
 
 // create a copy of an lval 
 lval* lval_copy(lval* v) {
@@ -212,6 +252,11 @@ lval* lval_copy(lval* v) {
         case LVAL_SYM:
             x->sym = malloc(strlen(v->sym) + 1);
             strcpy(x->sym, v->sym);
+            break;
+
+        case LVAL_STR:
+            x->str = malloc(strlen(v->str) + 1);
+            strcpy(x->str, v->str);
             break;
 
         case LVAL_QEXPR:
