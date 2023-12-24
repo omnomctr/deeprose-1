@@ -47,6 +47,9 @@ void lenv_add_builtins(lenv* e) {
     lenv_add_builtin(e, "print", builtin_print);
     lenv_add_builtin(e, "exit", builtin_exit);
     lenv_add_builtin(e, "error", builtin_error);
+
+    // other 
+    lenv_add_builtin(e, "atoi", builtin_atoi);
 }
 
 // interface for lenv_add_builtin
@@ -275,10 +278,10 @@ lval* builtin_first(lenv* e, lval* l) {
 
     // take the first element
     lval* v = lval_take(l, 0);
-
+    v->type = LVAL_SEXPR;
     // delete all the other elements
     while (v->count > 1) lval_del(lval_pop(v, 1));
-    return v;
+    return lval_eval(e, v);
 }
 
 // gives you all but the first element of a list in a qexpr
@@ -440,4 +443,17 @@ lval* builtin_error(lenv* e, lval* a) {
 
     lval_del(a);
     return err;
+}
+
+lval* builtin_atoi(lenv* e, lval* a) {
+    LASSERT_ARGS_NUM("atoi", a, 1);
+    LASSERT_ARGS_TYPE("atoi", a, 0, LVAL_STR);
+
+    lval* n = lval_pop(a, 0);
+    lval_del(a);
+
+    errno = 0;
+    long x = strtol(n->str, NULL, 10);
+    return errno != ERANGE ? 
+        lval_num(x) : lval_err("not a number");
 }

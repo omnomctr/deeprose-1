@@ -9,8 +9,10 @@
 (def {defn} (\ {name args body} 
     {def name (\ args body)}))
 
-;; inline
-; (def {defn} (\ {name args body} {def name (\ args body)}))
+(defn {empty?} {coll} {= coll {}})
+
+(defn {even?} {n} {= (% n 2) 0})
+(defn {odd?} {n} {not (even? n)})
 
 (defn {apply} {fn xs & rst}
     {eval (join (list fn) xs rst)})
@@ -38,13 +40,58 @@
 
 
 (defn {fib} {n}
-    {if (<= n 1)
-        {n}
-        {+ (fib (- n 1)) (fib (- n 2))}})
+    {cond { (= 0 n) 0 }
+          { (= 1 n) 1 }
+          { otherwise 
+                (+ (fib (- n 1)) 
+                   (fib (- n 2)))}})
 
 
 (defn {nth} {n l}
     {if (> n 1)
         {nth (dec n) (rest l)}
-        {eval (first l)}})
+        {first l}})
 
+(defn {take} {n coll}
+    {if (= n 0)
+        {{}}
+        {cons (first coll) (take (dec n) (rest coll))}})
+
+(defn {drop} {n coll}
+    {if (= n 0)
+        {coll}
+        {drop (dec n) (rest coll)}})
+
+(defn {map} {f coll}
+    {if (empty? coll)
+        {{}}
+        {cons (f (first coll)) (map f (rest coll))}})
+
+(defn {filter} {pred? coll}
+    {if (empty? coll)
+        {{}}
+        {if (pred? (first coll))
+            {cons (first coll)
+                  (filter pred? (rest coll))}
+            {filter pred? (rest coll)}}})
+
+(defn {foldl} {f accum coll}
+    {if (empty? coll)
+        {accum}
+        {foldl f (f accum (first coll)) (rest coll)}})
+
+(defn {range} {start end}
+    {if (> start end)
+        {{}}
+        {cons start (range (inc start) end)}})
+
+(defn {cond} {& cs}
+    {if (empty? cs)
+        {error "no selection found"}
+        {if (first (first cs))
+            {next (first cs)}
+            {apply cond (rest cs)}}})
+
+; wip
+;(defn {scope} {var}
+;    {(\ {_} var) ()})
