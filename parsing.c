@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
         }
 
         strncpy(path, getenv("DRLIBPATH"), 1024);
-        strncat(path, "/stdlib.pbl", 1024 - strlen(path));
+        strncat(path, "/stdlib.deeprose", 1024 - strlen(path));
 
         // load file in path
         builtin_load(e, 
