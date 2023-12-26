@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
         char path[1024];
         
         if (!getenv("DRLIBPATH")) {
-            puts("undefined define $DRLIBPATH");
+            puts("undefined env variable $DRLIBPATH");
             exit(EXIT_FAILURE);
         }
 

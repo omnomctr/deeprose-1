@@ -1,5 +1,7 @@
 .vscode 
 a.out
 deeprose
-mpc 
+mpc.c
 mpc.h
+mpc/
+mpc
