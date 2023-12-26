@@ -1,4 +1,4 @@
-;; pablo variables
+;; deeprose variables
 
 (def {True} 1)
 (def {False} 0)
@@ -8,7 +8,7 @@
 (def {EXIT_SUCCESS} 1)
 (def {EXIT_FAILURE} 0)
 
-;; pablo functions
+;; deeprose functions
 
 (def {defn} (\ {name args body} 
     {def name (\ args body)}))
@@ -84,10 +84,25 @@
         {accum}
         {foldl f (f accum (first coll)) (rest coll)}})
 
+(defn {foldr} {f accum coll}
+    {if (empty? coll)
+        {accum}
+        {f (foldr f accum (rest coll)) (first coll)}})
+
+(def {sum}     {foldl + 0})
+(def {product} {foldl * 1})
+
+(defn {elem} {a coll}
+    {foldl (\ {accum x} {or accum (= x a)}) False coll})
+
 (defn {range} {start end}
     {if (> start end)
         {{}}
         {cons start (range (inc start) end)}})
+
+(defn {charrange} {start end}
+    {map asciitostr (range (strtoascii start)
+                           (strtoascii end))})
 
 (defn {cond} {& cs}
     {if (empty? cs)

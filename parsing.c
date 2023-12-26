@@ -6,7 +6,7 @@
 #include "lval.h"
 #include "builtin.h"
 
-mpc_parser_t* Pablo;
+mpc_parser_t* Deeprose;
 
 // need to have this here because it depends on mpc parser token
 lval* builtin_load(lenv* e, lval* a) {
@@ -15,7 +15,7 @@ lval* builtin_load(lenv* e, lval* a) {
 
     // parse file given by string name 
     mpc_result_t result;
-    if (mpc_parse_contents(a->cell[0]->str, Pablo, &result)) {
+    if (mpc_parse_contents(a->cell[0]->str, Deeprose, &result)) {
         // read contents
         lval* expr = lval_read(result.output);
         mpc_ast_delete(result.output);
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
     mpc_parser_t* String   = mpc_new("string");
     mpc_parser_t* Comment  = mpc_new("comment");
     mpc_parser_t* Expr     = mpc_new("expr");
-    Pablo    = mpc_new("pablo");
+    Deeprose    = mpc_new("deeprose");
  
     mpca_lang(MPCA_LANG_DEFAULT, 
     "                                       \
@@ -68,9 +68,9 @@ int main(int argc, char **argv) {
     string  : /\"(\\\\.|[^\"])*\"/ ;  \
     comment : /;[^\\r\\n]*/ ;   \
     expr    : <number> | <symbol> | <sexpr> | <qexpr> | <string> | <comment> ; \
-    pablo   : /^/ <expr>* /$/ ;               \
+    deeprose   : /^/ <expr>* /$/ ;               \
     ",
-        Number, Symbol, Sexpr, Qexpr, String, Comment, Expr, Pablo);
+        Number, Symbol, Sexpr, Qexpr, String, Comment, Expr, Deeprose);
     
     lenv* e = lenv_new();
     lenv_add_builtins(e);
@@ -80,12 +80,12 @@ int main(int argc, char **argv) {
         // 1024 should be enough
         char path[1024];
         
-        if (!getenv("PABLOLIBPATH")) {
-            puts("undefined define $PABLOLIBPATH");
+        if (!getenv("DRLIBPATH")) {
+            puts("undefined define $DRLIBPATH");
             exit(EXIT_FAILURE);
         }
 
-        strncpy(path, getenv("PABLOLIBPATH"), 1024);
+        strncpy(path, getenv("DRLIBPATH"), 1024);
         strncat(path, "/stdlib.pbl", 1024 - strlen(path));
 
         // load file in path
@@ -106,26 +106,16 @@ int main(int argc, char **argv) {
         }
     } 
     
-    puts("Pablo version 0.0.0.0.1\n");
+    puts("Deeprose version 0.1.0\n");
     puts("press C-c to exit\n");
-
-    /*
-    //testing
-    FILE* f;
-    char buffer[100];
-    f = fopen("$PABLOLIBPATH/stdlib.pbl", "w+");
-    fread(buffer, 100, 1, f);
-    printf("%s\n", buffer);
-    fclose(f);
-    */
 
     while (1) {
         // purple ish blue colour
-        char* input = readline("\033[34mpablo =>\033[0m ");
+        char* input = readline("\033[34mdeeprose =>\033[0m ");
         add_history(input);  
 
         mpc_result_t r;
-        if (mpc_parse("<stdin>", input, Pablo, &r)) {
+        if (mpc_parse("<stdin>", input, Deeprose, &r)) {
             lval* val = lval_eval(e, lval_read(r.output));
             lval_println(val);
             mpc_ast_delete(r.output);
@@ -138,7 +128,7 @@ int main(int argc, char **argv) {
     }
 
     // free up parser heap memory stuff
-    mpc_cleanup(5, Number, Symbol, Sexpr, Qexpr, String, Comment, Expr, Pablo);
+    mpc_cleanup(5, Number, Symbol, Sexpr, Qexpr, String, Comment, Expr, Deeprose);
     lenv_del(e);
     return 0;
 }

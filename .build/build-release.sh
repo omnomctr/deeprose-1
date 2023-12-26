@@ -3,6 +3,6 @@ gcc --std=c99 \
     -leditline \
     -lm \
     parsing.c mpc.c lval.c builtin.c lenv.c \
-    -o pablo
+    -o deeprose
 
 echo "done"

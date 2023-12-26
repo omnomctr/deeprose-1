@@ -51,6 +51,8 @@ void lenv_add_builtins(lenv* e) {
     // other 
     lenv_add_builtin(e, "atoi", builtin_atoi);
     lenv_add_builtin(e, "itoa", builtin_itoa);
+    lenv_add_builtin(e, "strtoascii", builtin_strtoascii);
+    lenv_add_builtin(e, "asciitostr", builtin_asciitostr);
 }
 
 // interface for lenv_add_builtin
@@ -476,4 +478,30 @@ lval* builtin_itoa(lenv* e, lval* a) {
     lval* new = lval_str(str);
     free(str); free(n);
     return new;
+}
+
+lval* builtin_strtoascii(lenv* e, lval* a) {
+    LASSERT_ARGS_NUM("strtoascii", a, 1);
+    LASSERT_ARGS_TYPE("strtoascii", a, 0, LVAL_STR);
+    LASSERT(a, (strlen(a->cell[0]->str) == 1), 
+        "'strtoascii' function string takes one char in string");
+
+    lval* x = lval_pop(a, 0);
+    int number = (int)x->str[0];
+    lval_del(x);
+    return lval_num(number);
+}
+
+lval* builtin_asciitostr(lenv* e, lval* a) {
+    LASSERT_ARGS_NUM("asciitostr", a, 1);
+    LASSERT_ARGS_TYPE("asciitostr", a, 0, LVAL_NUM);
+    
+
+    lval* x = lval_pop(a, 0);
+    char character = (char)x->num;
+    lval_del(x);
+    char str[2];
+    str[0] = character;
+    str[1] = '\0';
+    return lval_str(str);
 }

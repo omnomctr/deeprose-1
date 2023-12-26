@@ -70,4 +70,6 @@ lval* builtin_error(lenv* e, lval* a);
 
 lval* builtin_atoi(lenv* e, lval* a);
 lval* builtin_itoa(lenv* e, lval* a);
+lval* builtin_strtoascii(lenv* e, lval* a);
+lval* builtin_asciitostr(lenv* e, lval* a);
 #endif
