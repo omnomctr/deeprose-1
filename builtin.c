@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <time.h>
 #include "builtin.h"
 
 // create lisp function, add it to the environment e, and free up the lisp values
@@ -47,6 +48,8 @@ void lenv_add_builtins(lenv* e) {
     lenv_add_builtin(e, "print", builtin_print);
     lenv_add_builtin(e, "exit", builtin_exit);
     lenv_add_builtin(e, "error", builtin_error);
+    lenv_add_builtin(e, "input-num", builtin_input_num);
+    lenv_add_builtin(e, "random-number", builtin_random_number);
 
     // other 
     lenv_add_builtin(e, "atoi", builtin_atoi);
@@ -419,10 +422,10 @@ lval* builtin_lambda(lenv* e, lval* a) {
 }
 
 lval* builtin_print(lenv* e, lval* a) {
-    for (int i = 0; i < a->count; i++) {
-        lval_print(a->cell[i]); 
-        putchar(' ');
-    }
+    LASSERT_ARGS_NUM("print", a, 1);
+    LASSERT_ARGS_TYPE("print", a, 0, LVAL_STR);
+
+    puts(a->cell[0]->str);
 
     putchar('\n');
     lval_del(a);
@@ -504,4 +507,28 @@ lval* builtin_asciitostr(lenv* e, lval* a) {
     str[0] = character;
     str[1] = '\0';
     return lval_str(str);
+}
+
+lval* builtin_input_num(lenv* e, lval* a) {
+    LASSERT_ARGS_NUM("input-num", a, 1);
+    LASSERT_ARGS_TYPE("input-num", a, 0, LVAL_FUN);
+
+    long num;
+    if (scanf("%li", &num) != 1) {
+        return lval_err("invalid input: not a number");
+    }
+
+    
+    return lval_call(e, a->cell[0], lval_add(lval_sexpr(), lval_num(num)));
+}
+
+// takes one argument: the max
+lval* builtin_random_number(lenv* e, lval* a) {
+    LASSERT_ARGS_NUM("random-number", a, 1);
+    LASSERT_ARGS_TYPE("random-number", a, 0, LVAL_NUM);
+
+    srand(time(NULL));
+    long r = (long) rand() % a->cell[0]->num;
+    lval_del(a);
+    return lval_num(r);
 }

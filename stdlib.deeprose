@@ -5,13 +5,14 @@
 (def {otherwise} 1) ; dont know how usefull this will be besides switch statements
 
 ; for the builtin exit function
-(def {EXIT_SUCCESS} 1)
-(def {EXIT_FAILURE} 0)
+(def {EXIT_SUCCESS} 0)
+(def {EXIT_FAILURE} 1)
 
 ;; deeprose functions
 
 (def {defn} (\ {name args body} 
     {def name (\ args body)}))
+
 
 (defn {empty?} {coll} {= coll {}})
 
@@ -32,6 +33,21 @@
 
 (defn {next} {xs}
     {first (rest xs)})
+
+(defn {last} {coll}
+    {if (empty? (rest coll))
+        {first coll}
+        {last (rest coll)}})
+
+; for side effects 
+(defn {do} {& coll}
+    {if (empty? coll)
+        {{}}
+        {last coll}})
+
+; create a new scope 
+(defn {scope} {form}
+    {((\ {_} form) ())})
 
 (defn {<=} {a b}
     {or (< a b)
