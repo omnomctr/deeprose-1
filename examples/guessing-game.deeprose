@@ -1,11 +1,15 @@
 (def {answer} (+ 1 (random-number 14)))
 (print "I'm thinking of a number from 1 to 15")
-;(print (itoa answer))
+(print (itoa answer))
 
-(print "Whats the number I'm thinking of? :)")
-(input-num (\ {guess} 
-    {if (= guess answer)
-        {do (print "You got it right! Wow")
-            (exit EXIT_SUCCESS)}
-        {do (print "wrong")
-            (exit EXIT_FAILURE)}}))
+(defn {loop} {answer}
+    {do 
+        {def {guess} (input-num "Whats the number I'm thinking of? :)")}
+        {if (= guess answer)
+            {do {print "you got it right! woohoo"}
+                {exit EXIT_SUCCESS}}
+            {do {print "Wrong. try again"}
+                {loop answer}}}})
+
+(loop answer)
+

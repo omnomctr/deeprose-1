@@ -48,6 +48,7 @@ void lenv_add_builtins(lenv* e) {
     lenv_add_builtin(e, "print", builtin_print);
     lenv_add_builtin(e, "exit", builtin_exit);
     lenv_add_builtin(e, "error", builtin_error);
+    lenv_add_builtin(e, "do", builtin_do);
     lenv_add_builtin(e, "input-num", builtin_input_num);
     lenv_add_builtin(e, "random-number", builtin_random_number);
 
@@ -425,9 +426,8 @@ lval* builtin_print(lenv* e, lval* a) {
     LASSERT_ARGS_NUM("print", a, 1);
     LASSERT_ARGS_TYPE("print", a, 0, LVAL_STR);
 
-    puts(a->cell[0]->str);
+    printf("%s\n", a->cell[0]->str);
 
-    putchar('\n');
     lval_del(a);
     return lval_sexpr();
 }
@@ -503,25 +503,24 @@ lval* builtin_asciitostr(lenv* e, lval* a) {
     lval* x = lval_pop(a, 0);
     char character = (char)x->num;
     lval_del(x);
-    char str[2];
-    str[0] = character;
-    str[1] = '\0';
+    char str[2] = {character, '\0'};
     return lval_str(str);
 }
 
 lval* builtin_input_num(lenv* e, lval* a) {
     LASSERT_ARGS_NUM("input-num", a, 1);
-    LASSERT_ARGS_TYPE("input-num", a, 0, LVAL_FUN);
+    LASSERT_ARGS_TYPE("input-num", a, 0, LVAL_STR);
+
+    printf("%s\n", a->cell[0]->str);
 
     long num;
     if (scanf("%li", &num) != 1) {
         return lval_err("invalid input: not a number");
     }
 
-    
-    return lval_call(e, a->cell[0], lval_add(lval_sexpr(), lval_num(num)));
+    lval_del(a);
+    return lval_num(num);
 }
-
 // takes one argument: the max
 lval* builtin_random_number(lenv* e, lval* a) {
     LASSERT_ARGS_NUM("random-number", a, 1);
@@ -531,4 +530,27 @@ lval* builtin_random_number(lenv* e, lval* a) {
     long r = (long) rand() % a->cell[0]->num;
     lval_del(a);
     return lval_num(r);
+}
+
+lval* builtin_do(lenv* e, lval* a) {
+    for (int i = 0; i < a->count; i++) {
+        LASSERT(a, (a->cell[i]->type == LVAL_QEXPR),
+            "Function 'do' passed incorrect type | got %s, expected %s",
+            ltype_name(a->cell[i]->type), ltype_name(LVAL_QEXPR));
+    }
+
+    while (1) {
+        lval* proc = lval_pop(a, 0);
+        if (a->count != 0) {
+            proc->type = LVAL_SEXPR;
+            lval_eval(e, proc);
+        } else {
+            // return the final expression
+            proc->type = LVAL_SEXPR;
+            lval_del(a);
+            return lval_eval(e, proc);
+        }
+    }
+
+    return lval_err("whoops - something went wrong with builtin_do");
 }

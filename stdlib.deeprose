@@ -39,12 +39,6 @@
         {first coll}
         {last (rest coll)}})
 
-; for side effects 
-(defn {do} {& coll}
-    {if (empty? coll)
-        {{}}
-        {last coll}})
-
 ; create a new scope 
 (defn {scope} {form}
     {((\ {_} form) ())})
