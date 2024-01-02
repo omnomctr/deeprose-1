@@ -57,6 +57,7 @@ void lenv_add_builtins(lenv* e) {
     lenv_add_builtin(e, "itoa", builtin_itoa);
     lenv_add_builtin(e, "strtoascii", builtin_strtoascii);
     lenv_add_builtin(e, "asciitostr", builtin_asciitostr);
+    lenv_add_builtin(e, "concat-str", builtin_concat_str);
 }
 
 // interface for lenv_add_builtin
@@ -553,4 +554,26 @@ lval* builtin_do(lenv* e, lval* a) {
     }
 
     return lval_err("whoops - something went wrong with builtin_do");
+}
+
+// this code might be problematic I got some malloc error with it once
+lval* builtin_concat_str(lenv* e, lval* a) {
+    size_t stringsize = 0;
+
+    for (int i = 0; i < a->count; i++) {
+        LASSERT(a, (a->cell[i]->type == LVAL_STR),
+            "Function 'concat-str' passed incorrect type | got %s, expected %s",
+            ltype_name(a->cell[i]->type), ltype_name(LVAL_STR));
+
+        stringsize += strlen(a->cell[i]->str);
+    }
+
+    char* newstring = malloc((sizeof(stringsize) + 1) * sizeof(char));
+    *newstring = '\0';
+    for (int i = 0; i < a->count; i++) {
+        strcat(newstring, a->cell[i]->str);
+    }
+    lval_print(lval_str(newstring)); putchar('\n');
+    lval_del(a);
+    return lval_str(newstring);
 }
