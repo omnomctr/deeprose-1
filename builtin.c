@@ -502,9 +502,8 @@ lval* builtin_asciitostr(lenv* e, lval* a) {
     
 
     lval* x = lval_pop(a, 0);
-    char character = (char)x->num;
-    lval_del(x);
-    char str[2] = {character, '\0'};
+    char str[2] = {(char)x->num, '\0'};
+    lval_del(x);lval_del(a);
     return lval_str(str);
 }
 
@@ -573,7 +572,7 @@ lval* builtin_concat_str(lenv* e, lval* a) {
     for (int i = 0; i < a->count; i++) {
         strcat(newstring, a->cell[i]->str);
     }
-    lval_print(lval_str(newstring)); putchar('\n');
+    //lval_print(lval_str(newstring)); putchar('\n');
     lval_del(a);
     return lval_str(newstring);
 }
