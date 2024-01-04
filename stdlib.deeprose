@@ -2,7 +2,8 @@
 
 (def '(True) 1)
 (def '(False) 0)
-(def '(otherwise) 1) ; dont know how usefull this will be besides switch statements
+(def '(nil) '()) ; nil is just an empty list
+(def '(otherwise) 1) 
 
 ; for the builtin exit function
 (def '(EXIT_SUCCESS) 0)
@@ -78,12 +79,12 @@
 
 (defn '(map) '(f coll)
     '(if (empty? coll)
-        '('())
+        '(nil)
         '(cons (f (first coll)) (map f (rest coll)))))
 
 (defn '(filter) '(pred? coll)
     '(if (empty? coll)
-        '('())
+        '(nil)
         '(if (pred? (first coll))
             '(cons (first coll)
                   (filter pred? (rest coll)))
@@ -107,7 +108,7 @@
 
 (defn '(range) '(start end)
     '(if (> start end)
-        '('())
+        '(nil)
         '(cons start (range (inc start) end))))
 
 (defn '(charrange) '(start end)
