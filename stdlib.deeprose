@@ -1,126 +1,126 @@
 ;; deeprose variables
 
-(def {True} 1)
-(def {False} 0)
-(def {otherwise} 1) ; dont know how usefull this will be besides switch statements
+(def '(True) 1)
+(def '(False) 0)
+(def '(otherwise) 1) ; dont know how usefull this will be besides switch statements
 
 ; for the builtin exit function
-(def {EXIT_SUCCESS} 0)
-(def {EXIT_FAILURE} 1)
+(def '(EXIT_SUCCESS) 0)
+(def '(EXIT_FAILURE) 1)
 
 ;; deeprose functions
 
-(def {defn} (\ {name args body} 
-    {def name (\ args body)}))
+(def '(defn) (\ '(name args body) 
+    '(def name (\ args body))))
 
 
-(defn {empty?} {coll} {= coll {}})
+(defn '(empty?) '(coll) '(= coll '()))
 
-(defn {even?} {n} {= (% n 2) 0})
-(defn {odd?} {n} {not (even? n)})
+(defn '(even?) '(n) '(= (% n 2) 0))
+(defn '(odd?) '(n) '(not (even? n)))
 
-(defn {apply} {fn xs & rst}
-    {eval (join (list fn) xs rst)})
+(defn '(apply) '(fn xs & rst)
+    '(eval (join (list fn) xs rst)))
 
 ;; since I'm using arrays rather than linked lists theres no reason
 ;; to have a builtin cons function - they would both be O(n)
-(defn {cons} {x xs}
-    {join (list x) xs})
+(defn '(cons) '(x xs)
+    '(join (list x) xs))
 
 
-(defn {inc} {n} {+ n 1})
-(defn {dec} {n} {- n 1})
+(defn '(inc) '(n) '(+ n 1))
+(defn '(dec) '(n) '(- n 1))
 
-(defn {next} {xs}
-    {first (rest xs)})
+(defn '(next) '(xs)
+    '(first (rest xs)))
 
-(defn {last} {coll}
-    {if (empty? (rest coll))
-        {first coll}
-        {last (rest coll)}})
+(defn '(last) '(coll)
+    '(if (empty? (rest coll))
+        '(first coll)
+        '(last (rest coll))))
 
 ; create a new scope 
-(defn {scope} {form}
-    {((\ {_} form) ())})
+(defn '(scope) '(form)
+    '(((\ '(_) form) ())))
 
-(defn {<=} {a b}
-    {or (< a b)
-        (= a b)})
-
-
-(defn {>=} {a b}
-    {or (> a b)
-        (= a b)})
+(defn '(<=) '(a b)
+    '(or (< a b)
+        (= a b)))
 
 
-(defn {fib} {n}
-    {cond { (= 0 n) 0 }
-          { (= 1 n) 1 }
-          { otherwise 
+(defn '(>=) '(a b)
+    '(or (> a b)
+        (= a b)))
+
+
+(defn '(fib) '(n)
+    '(cond '( (= 0 n) 0 )
+          '( (= 1 n) 1 )
+          '( otherwise 
                 (+ (fib (- n 1)) 
-                   (fib (- n 2)))}})
+                   (fib (- n 2))))))
 
 
-(defn {nth} {n l}
-    {if (> n 1)
-        {nth (dec n) (rest l)}
-        {first l}})
+(defn '(nth) '(n l)
+    '(if (> n 1)
+        '(nth (dec n) (rest l))
+        '(first l)))
 
-(defn {take} {n coll}
-    {if (= n 0)
-        {{}}
-        {cons (first coll) (take (dec n) (rest coll))}})
+(defn '(take) '(n coll)
+    '(if (= n 0)
+        '('())
+        '(cons (first coll) (take (dec n) (rest coll)))))
 
-(defn {drop} {n coll}
-    {if (= n 0)
-        {coll}
-        {drop (dec n) (rest coll)}})
+(defn '(drop) '(n coll)
+    '(if (= n 0)
+        '(coll)
+        '(drop (dec n) (rest coll))))
 
-(defn {map} {f coll}
-    {if (empty? coll)
-        {{}}
-        {cons (f (first coll)) (map f (rest coll))}})
+(defn '(map) '(f coll)
+    '(if (empty? coll)
+        '('())
+        '(cons (f (first coll)) (map f (rest coll)))))
 
-(defn {filter} {pred? coll}
-    {if (empty? coll)
-        {{}}
-        {if (pred? (first coll))
-            {cons (first coll)
-                  (filter pred? (rest coll))}
-            {filter pred? (rest coll)}}})
+(defn '(filter) '(pred? coll)
+    '(if (empty? coll)
+        '('())
+        '(if (pred? (first coll))
+            '(cons (first coll)
+                  (filter pred? (rest coll)))
+            '(filter pred? (rest coll)))))
 
-(defn {foldl} {f accum coll}
-    {if (empty? coll)
-        {accum}
-        {foldl f (f accum (first coll)) (rest coll)}})
+(defn '(foldl) '(f accum coll)
+    '(if (empty? coll)
+        '(accum)
+        '(foldl f (f accum (first coll)) (rest coll))))
 
-(defn {foldr} {f accum coll}
-    {if (empty? coll)
-        {accum}
-        {f (foldr f accum (rest coll)) (first coll)}})
+(defn '(foldr) '(f accum coll)
+    '(if (empty? coll)
+        '(accum)
+        '(f (foldr f accum (rest coll)) (first coll))))
 
-(def {sum}     {foldl + 0})
-(def {product} {foldl * 1})
+(def '(sum)     '(foldl + 0))
+(def '(product) '(foldl * 1))
 
-(defn {elem} {a coll}
-    {foldl (\ {accum x} {or accum (= x a)}) False coll})
+(defn '(elem) '(a coll)
+    '(foldl (\ '(accum x) '(or accum (= x a))) False coll))
 
-(defn {range} {start end}
-    {if (> start end)
-        {{}}
-        {cons start (range (inc start) end)}})
+(defn '(range) '(start end)
+    '(if (> start end)
+        '('())
+        '(cons start (range (inc start) end))))
 
-(defn {charrange} {start end}
-    {map asciitostr (range (strtoascii start)
-                           (strtoascii end))})
+(defn '(charrange) '(start end)
+    '(map asciitostr (range (strtoascii start)
+                           (strtoascii end))))
 
-(defn {cond} {& cs}
-    {if (empty? cs)
-        {error "no selection found"}
-        {if (first (first cs))
-            {next (first cs)}
-            {apply cond (rest cs)}}})
+(defn '(cond) '(& cs)
+    '(if (empty? cs)
+        '(error "no selection found")
+        '(if (first (first cs))
+            '(next (first cs))
+            '(apply cond (rest cs)))))
 
 ; wip
-;(defn {scope} {var}
-;    {(\ {_} var) ()})
+;(defn '(scope) '(var)
+;    '((\ '(_) var) ()))

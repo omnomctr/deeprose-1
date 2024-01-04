@@ -153,8 +153,8 @@ lval* lval_read(mpc_ast_t* t) {
     for (int i = 0; i < t->children_num; i++) {
         if (strcmp(t->children[i]->contents, "(") == 0) { continue; }
         if (strcmp(t->children[i]->contents, ")") == 0) { continue; }
-        if (strcmp(t->children[i]->contents, "{") == 0) { continue; }
-        if (strcmp(t->children[i]->contents, "}") == 0) { continue; }
+        if (strcmp(t->children[i]->contents, "'(") == 0) { continue; }
+        if (strcmp(t->children[i]->contents, ")") == 0) { continue; }
         if (strcmp(t->children[i]->tag,  "regex") == 0) { continue; }
         // ignore comments 
         if (strstr(t->children[i]->tag, "comment")) { continue; }
@@ -174,8 +174,8 @@ lval* lval_add(lval* v, lval* x) {
 }
 
 // print out an expression recursively w/ lval_print
-void lval_expr_print(lval* v, char open, char close) {
-    putchar(open);
+void lval_expr_print(lval* v, char* open, char* close) {
+    printf("%s", open);
 
     for(int i = 0; i < v->count; i++) {
         lval_print(v->cell[i]);
@@ -185,7 +185,7 @@ void lval_expr_print(lval* v, char open, char close) {
         }
     }
 
-    putchar(close);
+    printf("%s", close);
 }
 
 // prints out the lisp value depending on what it is
@@ -195,8 +195,8 @@ void lval_print(lval* v) {
         case LVAL_ERR:   printf("\033[31mError: %s\033[0m", v->err); break;
         case LVAL_SYM:   printf("%s", v->sym); break;
         case LVAL_STR:   lval_print_str(v); break;
-        case LVAL_SEXPR: lval_expr_print(v, '(', ')'); break;
-        case LVAL_QEXPR: lval_expr_print(v, '{', '}'); break;
+        case LVAL_SEXPR: lval_expr_print(v, "(", ")"); break;
+        case LVAL_QEXPR: lval_expr_print(v, "'(", ")"); break;
         case LVAL_FUN:
             if (v->builtin) {
                 printf("<builtin>");

@@ -56,7 +56,7 @@ lval* lval_read(mpc_ast_t* t);
 lval* lval_read_str(mpc_ast_t* t);
 void lval_print(lval* v);
 void lval_println(lval* v);
-void lval_expr_print(lval* v, char open, char close);
+void lval_expr_print(lval* v, char* open, char* close);
 void lval_print_str(lval* v);
 lval* lval_eval_sexpr(lenv* e, lval* v);
 lval* lval_take(lval* v, int i);
