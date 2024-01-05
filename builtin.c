@@ -58,6 +58,7 @@ void lenv_add_builtins(lenv* e) {
     lenv_add_builtin(e, "strtoascii", builtin_strtoascii);
     lenv_add_builtin(e, "asciitostr", builtin_asciitostr);
     lenv_add_builtin(e, "concat-str", builtin_concat_str);
+    lenv_add_builtin(e, "run", builtin_run);
 }
 
 // interface for lenv_add_builtin
@@ -567,7 +568,7 @@ lval* builtin_concat_str(lenv* e, lval* a) {
         stringsize += strlen(a->cell[i]->str);
     }
 
-    char* newstring = malloc((sizeof(stringsize) + 1) * sizeof(char));
+    char* newstring = malloc((stringsize + 1) * sizeof(char));
     *newstring = '\0';
     for (int i = 0; i < a->count; i++) {
         strcat(newstring, a->cell[i]->str);
@@ -575,4 +576,13 @@ lval* builtin_concat_str(lenv* e, lval* a) {
     //lval_print(lval_str(newstring)); putchar('\n');
     lval_del(a);
     return lval_str(newstring);
+}
+
+lval* builtin_run(lenv* e, lval* a) {
+    LASSERT_ARGS_NUM("run", a, 1);
+    LASSERT_ARGS_TYPE("run", a, 0, LVAL_STR);
+
+    system(a->cell[0]->str);
+    free(a);
+    return lval_sexpr();
 }

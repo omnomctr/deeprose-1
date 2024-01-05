@@ -51,7 +51,7 @@
 
 (defn '(>=) '(a b)
     '(or (> a b)
-        (= a b)))
+         (= a b)))
 
 
 (defn '(fib) '(n)

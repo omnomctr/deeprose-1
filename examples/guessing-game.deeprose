@@ -8,7 +8,11 @@
             '(do '(print "you got it right! woohoo")
                 '())
             '(do '(print "Wrong. try again")
-                '(loop answer)))))
+                 '(print (concat-str "you guessed " (if (> guess answer)
+                                                        '("higher")
+                                                        '("lower")) " than the answer"))
+                 '(print "try again")
+                 '(loop answer)))))
 
 (loop answer)
 (exit EXIT_SUCCESS)
