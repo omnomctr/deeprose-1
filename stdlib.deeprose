@@ -32,6 +32,7 @@
 (defn '(inc) '(n) '(+ n 1))
 (defn '(dec) '(n) '(- n 1))
 
+
 (defn '(next) '(xs)
     '(first (rest xs)))
 
@@ -102,6 +103,20 @@
 
 (def '(sum)     '(foldl + 0))
 (def '(product) '(foldl * 1))
+
+(defn '(max-aux) '(a b)
+    '(if (>= a b)
+        '(a)
+        '(b)))
+(defn '(max) '(& a)
+    '(foldl max-aux (first a) (rest a)))
+
+(defn '(min-aux) '(a b)
+    '(if (<= a b)
+        '(a)
+        '(b)))
+(defn '(min) '(& a)
+    '(foldl min-aux (first a) (rest a)))
 
 (defn '(elem) '(a coll)
     '(foldl (\ '(accum x) '(or accum (= x a))) False coll))

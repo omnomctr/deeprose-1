@@ -1,0 +1,22 @@
+; nth element of fibonnacci
+(defn '(fib-nth) '(n)
+    '(if (< n 1)
+        '(n)
+        '(+ (fib-nth (- n 1))
+            (fib-nth (- n 2))))) 
+
+; internal function for fib
+; creates a list of the fibonnacci sequence up to a certain index
+(defn '(aux-fib) '(prev current left)
+    '(if (> left 1)
+        '(cons current 
+               (aux-fib current (max (+ prev current) 1) (dec left)))
+        '(list current)))
+
+; partial evaluation can be used for all non-builtin non-variadic functions 
+; here we use it to make aux-fib more user friendly
+(def '(fib) (aux-fib 0 0))
+
+; using it 
+(fib 10)
+; outputs '(0 1 1 2 3 5 8 13 21 34)
