@@ -6,7 +6,7 @@
         '(def '(guess) (input-num "Whats the number I'm thinking of? :)"))
         '(if (= guess answer)
             '(do '(print "you got it right! woohoo")
-                '())
+                 '())
             '(do '(print "Wrong. try again")
                  '(print (concat-str "you guessed " (if (> guess answer)
                                                         '("higher")

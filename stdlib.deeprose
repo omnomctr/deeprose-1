@@ -104,19 +104,15 @@
 (def '(sum)     '(foldl + 0))
 (def '(product) '(foldl * 1))
 
-(defn '(max-aux) '(a b)
-    '(if (>= a b)
-        '(a)
-        '(b)))
 (defn '(max) '(& a)
-    '(foldl max-aux (first a) (rest a)))
+    '(foldl 
+        (\ '(a b) '(if (>= a b) '(a) '(b))) 
+        (first a) (rest a)))
 
-(defn '(min-aux) '(a b)
-    '(if (<= a b)
-        '(a)
-        '(b)))
 (defn '(min) '(& a)
-    '(foldl min-aux (first a) (rest a)))
+    '(foldl 
+        (\ '(a b) '(if (<= a b) '(a) '(b))) 
+        (first a) (rest a)))
 
 (defn '(elem) '(a coll)
     '(foldl (\ '(accum x) '(or accum (= x a))) False coll))
@@ -128,7 +124,13 @@
 
 (defn '(charrange) '(start end)
     '(map asciitostr (range (strtoascii start)
-                           (strtoascii end))))
+                            (strtoascii end))))
+
+(defn '(reverse) '(coll)
+    '(if (empty? coll)
+        '(nil)
+        '(join (reverse (rest coll))
+               (list (first coll)))))
 
 (defn '(cond) '(& cs)
     '(if (empty? cs)
@@ -136,7 +138,3 @@
         '(if (first (first cs))
             '(next (first cs))
             '(apply cond (rest cs)))))
-
-; wip
-;(defn '(scope) '(var)
-;    '((\ '(_) var) ()))
